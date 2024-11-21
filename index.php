@@ -1,3 +1,26 @@
+<?php
+session_start();
+require 'functions.php';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = $_POST['email'];
+    $password = $_POST['password'];
+
+    $user = validate_login($email, $password);
+
+    if ($user) {
+        // Login successful
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['email'] = $user['email'];
+        $_SESSION['name'] = $user['name'];
+        header("Location: dashboard.php");
+        exit();
+    } else {
+        $error = "Invalid email or password.";
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
