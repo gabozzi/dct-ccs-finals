@@ -87,4 +87,88 @@ function get_passed_students_count() {
     return $passed_count;
 }
 
+// Function to get all subjects
+function get_all_subjects() {
+    $conn = db_connect();
+    $query = "SELECT subject_code, subject_name FROM subjects ORDER BY id ASC"; // Fetch all subjects in order
+    $result = $conn->query($query);
+
+    $subjects = [];
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $subjects[] = $row;
+        }
+    }
+    $conn->close();
+    return $subjects;
+}
+
+// Function to get a single subject by ID
+function get_subject_by_id($subject_id) {
+    $conn = db_connect();
+    $sql = "SELECT * FROM subjects WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $subject_id);
+    $stmt->execute();
+    
+    $result = $stmt->get_result();
+    $subject = $result->fetch_assoc();
+    
+    $stmt->close();
+    $conn->close();
+    
+    return $subject;
+}
+
+function is_subject_name_duplicate($subject_code, $subject_name) {
+    $conn = db_connect();
+
+    // Query to check for duplicates
+    $sql = "SELECT * FROM subjects WHERE subject_code = ? OR subject_name = ?";
+    $stmt = $conn->prepare($sql);
+
+    // Bind parameters
+    $stmt->bind_param("ss", $subject_code, $subject_name);
+
+    // Execute the query
+    $stmt->execute();
+
+    // Fetch the result
+    $result = $stmt->get_result();
+    $existing_subject = $result->fetch_assoc();
+
+    // Check if a duplicate exists
+    if ($existing_subject) {
+        return "Invalid Input: Duplicate Subject Found";
+    }
+
+    return null;
+}
+
+
+// Function to insert a new subject
+function insert_subject($subject_code, $subject_name) {
+    $conn = db_connect(); // Use the existing DB connection function
+    
+    // Prepare the query to prevent SQL injection
+    $query = "INSERT INTO subjects (subject_code, subject_name) VALUES (?, ?)";
+    $stmt = $conn
+    ->prepare($query);
+    
+    // Bind parameters and execute the query
+    $stmt->bind_param("ss", $subject_code, $subject_name);  // "ss" for two strings
+    
+    if ($stmt->execute()) {
+        return true;  // Return true if successful
+    } else {
+        return false;  // Return false if there was an error
+    }
+}
+
+
+
+
+
+
+
 ?>
