@@ -61,30 +61,30 @@ function get_student_count() {
     return $student_count;
 }
 
-//FUNCTION TO GET THE COUNT OF FAILED STUDENTS
+// Function to get the count of failed students
 function get_failed_students_count() {
     $conn = db_connect();
     $sql = "SELECT COUNT(*) AS failed_count 
             FROM students s 
-            JOIN grades g ON s.id = g.student_id
-            WHERE g.grade < 75";
+            JOIN students_subjects ss ON s.id = ss.student_id
+            WHERE ss.grade < 75";
     $result = $conn->query($sql);
     $failed_count = $result->fetch_assoc()['failed_count'];
     $conn->close();
     return $failed_count;
 }
-//FUNTCTION TO GET THE COUNT OF PASSED STUDENTS
+
+// Function to get the count of passed students
 function get_passed_students_count() {
     $conn = db_connect();
     $sql = "SELECT COUNT(*) AS passed_count 
             FROM students s 
-            JOIN grades g ON s.id = g.student_id
-            WHERE g.grade >= 75";
+            JOIN students_subjects ss ON s.id = ss.student_id
+            WHERE ss.grade >= 75";
     $result = $conn->query($sql);
     $passed_count = $result->fetch_assoc()['passed_count'];
     $conn->close();
     return $passed_count;
 }
-
 
 ?>
