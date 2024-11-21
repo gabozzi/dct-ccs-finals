@@ -7,7 +7,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $user = validate_login($email, $password);
 
-    // Initialize an empty error message
     $errorMessages = [];
 
     if (empty($email)) {
