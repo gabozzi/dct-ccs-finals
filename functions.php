@@ -41,7 +41,29 @@ function validate_login($email, $password) {
     return false;
 }
 
-//FUNCTION TO GET SUBJECTS COUNT
+function logout($indexPage) {
+    // Unset the 'email' session variable
+    unset($_SESSION['email']);
+
+    // Destroy the session
+    session_destroy();
+
+    // Redirect to the login page (index.php)
+    header("Location: $indexPage");
+    exit;
+}
+
+function guard_login(){
+    
+    $dashboardPage = 'dashboard.php';
+
+    if(isset($_SESSION['email'])){
+        header("Location: $dashboardPage");
+    } 
+}
+
+
+// FUNCTION TO GET SUBJECTS COUNT
 function get_subject_count() {
     $conn = db_connect();
     $sql = "SELECT COUNT(*) AS subject_count FROM subjects";
@@ -51,7 +73,7 @@ function get_subject_count() {
     return $subject_count;
 }
 
-//FNCTION TO GET COUNTS OF STUDENTS
+// FUNCTION TO GET COUNTS OF STUDENTS
 function get_student_count() {
     $conn = db_connect();
     $sql = "SELECT COUNT(*) AS student_count FROM students";
@@ -103,22 +125,22 @@ function get_all_subjects() {
     return $subjects;
 }
 
-// Function to get a single subject by ID
-function get_subject_by_id($subject_id) {
-    $conn = db_connect();
-    $sql = "SELECT * FROM subjects WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $subject_id);
-    $stmt->execute();
+// function get_subject_by_code($subject_code) {
+//     $conn = db_connect();
+//     $sql = "SELECT * FROM subjects WHERE subject_code = ?"; // Fetch subject by code
+//     $stmt = $conn->prepare($sql);
+//     $stmt->bind_param("s", $subject_code); // Bind the subject code parameter
     
-    $result = $stmt->get_result();
-    $subject = $result->fetch_assoc();
+//     $stmt->execute();
     
-    $stmt->close();
-    $conn->close();
+//     $result = $stmt->get_result();
+//     $subject = $result->fetch_assoc(); // Fetch the row as an associative array
     
-    return $subject;
-}
+//     $stmt->close();
+//     $conn->close();
+    
+//     return $subject;
+// }
 
 function is_subject_name_duplicate($subject_code, $subject_name) {
     $conn = db_connect();
@@ -145,30 +167,45 @@ function is_subject_name_duplicate($subject_code, $subject_name) {
     return null;
 }
 
-
 // Function to insert a new subject
 function insert_subject($subject_code, $subject_name) {
     $conn = db_connect(); // Use the existing DB connection function
     
     // Prepare the query to prevent SQL injection
     $query = "INSERT INTO subjects (subject_code, subject_name) VALUES (?, ?)";
-    $stmt = $conn
-    ->prepare($query);
+    $stmt = $conn->prepare($query);
     
     // Bind parameters and execute the query
     $stmt->bind_param("ss", $subject_code, $subject_name);  // "ss" for two strings
     
     if ($stmt->execute()) {
+        $stmt->close();
+        $conn->close();
         return true;  // Return true if successful
     } else {
+        $stmt->close();
+        $conn->close();
         return false;  // Return false if there was an error
     }
 }
 
+// Function to get a subject by code
+function get_subject_by_code($subject_code) {
+    global $conn;
+    $stmt = $conn->prepare("SELECT * FROM subjects WHERE subject_code = ?");
+    $stmt->bind_param("s", $subject_code);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result->fetch_assoc();
+}
 
-
-
-
+// Function to update a subject's name
+function update_subject($subject_code, $subject_name) {
+    global $conn;
+    $stmt = $conn->prepare("UPDATE subjects SET subject_name = ? WHERE subject_code = ?");
+    $stmt->bind_param("ss", $subject_name, $subject_code);
+    return $stmt->execute();
+}
 
 
 ?>

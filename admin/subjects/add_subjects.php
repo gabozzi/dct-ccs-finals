@@ -2,21 +2,39 @@
 session_start();
 require '../../functions.php';
 
+guard_login();
+
 if (!isset($_SESSION['user_id'])) {
     header('Location: index.php'); // Redirect to login page if not logged in
     exit();
 }
 
 $message = '';
+
+// Ensure subject code is provided
+if (!isset($_GET['code']) || empty($_GET['code'])) {
+    header('Location: add_subjects.php'); // Redirect if no subject code is provided
+    exit();
+}
+
+$subject_code = $_GET['code'];
+
+// Fetch subject details based on the subject code
+$subject = get_subject_by_code($subject_code);
+
+// If the subject does not exist, redirect back
+if (!$subject) {
+    header('Location: add_subjects.php');
+    exit();
+}
+
+// Handle form submission for updating the subject
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Retrieve the subject code and name from POST data
-    $subject_code = trim($_POST['subject_code']);
+    // Get subject name from the POST data
     $subject_name = trim($_POST['subject_name']);
 
-    // Check if subject code or name is empty
-    if (empty($subject_code)) {
-        $message = "Subject code is required.";
-    } elseif (empty($subject_name)) {
+    // Validate input
+    if (empty($subject_name)) {
         $message = "Subject name is required.";
     } else {
         // Check for duplicates
@@ -25,23 +43,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($duplicate_error) {
             $message = $duplicate_error;
         } else {
-            // Insert the new subject
-            if (insert_subject($subject_code, $subject_name)) {
-                header('Location: add_subjects.php'); // Redirect to subjects page after success
+            // Update the subject in the database
+            if (update_subject($subject_code, $subject_name)) {
+                header('Location: add_subjects.php'); // Redirect after success
                 exit();
             } else {
-                $message = "An error occurred while adding the subject.";
+                $message = "An error occurred while updating the subject.";
             }
         }
     }
 }
 
-// Get all subjects for display
-$subjects = get_all_subjects();
-
-// Set the current page and page title
+// Set the current page and title
 $currentPage = 'subjects';
-$pageTitle = "Add a New Subject";
+$pageTitle = "Edit Subject";
 
 $dashboardPage = '../dashboard.php';
 $add_subPage = './add_subjects.php';
@@ -71,7 +86,8 @@ require '../partials/side-bar.php';
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="<?= $dashboardPage ?>">Dashboard</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Add Subject</li>
+                <li class="breadcrumb-item"><a href="<?= $add_subPage ?>">Subjects</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Edit Subject</li>
             </ol>
         </nav>
 
@@ -80,62 +96,23 @@ require '../partials/side-bar.php';
         <div class="alert alert-warning"><?php echo $message; ?></div>
         <?php endif; ?>
 
-        <!-- Add Subject Form -->
+        <!-- Edit Subject Form -->
         <div class="card mb-4">
             <div class="card-body">
-                <form action="add_subjects.php" method="POST">
+                <form action="edit_subjects.php?code=<?php echo urlencode($subject_code); ?>" method="POST">
                     <div class="mb-3">
                         <label for="subject_code" class="form-label">Subject Code</label>
-                        <input type="text" class="form-control" id="subject_code" name="subject_code" required
-                            placeholder="Enter Subject Code"
-                            value="<?php echo isset($_POST['subject_code']) ? htmlspecialchars($_POST['subject_code']) : ''; ?>">
+                        <input type="text" class="form-control" id="subject_code" name="subject_code" readonly
+                            value="<?php echo htmlspecialchars($subject['subject_code']); ?>">
                     </div>
                     <div class="mb-3">
                         <label for="subject_name" class="form-label">Subject Name</label>
                         <input type="text" class="form-control" id="subject_name" name="subject_name" required
                             placeholder="Enter Subject Name"
-                            value="<?php echo isset($_POST['subject_name']) ? htmlspecialchars($_POST['subject_name']) : ''; ?>">
+                            value="<?php echo htmlspecialchars($subject['subject_name']); ?>">
                     </div>
-                    <button type="submit" class="btn btn-primary">Add Subject</button>
+                    <button type="submit" class="btn btn-primary">Update Subject</button>
                 </form>
-            </div>
-        </div>
-
-        <!-- Display List of Subjects -->
-        <div class="card">
-            <div class="card-header">
-                <h4>Subject List</h4>
-            </div>
-            <div class="card-body">
-                <?php if (count($subjects) > 0): ?>
-                <!-- Subjects Table -->
-                <table class="table table-light table-hover mb-4">
-                    <thead class="table-primary">
-                        <tr>
-                            <th>Subject Code</th>
-                            <th>Subject Name</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($subjects as $subject): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($subject['subject_code']); ?></td>
-                            <td><?php echo htmlspecialchars($subject['subject_name']); ?></td>
-                            <td>
-                                <a href="edit_subjects.php?code=<?php echo urlencode($subject['subject_code']); ?>"
-                                    class="btn btn-sm btn-warning">Edit</a>
-                                <a href="delete_subjects.php?code=<?php echo urlencode($subject['subject_code']); ?>"
-                                    class="btn btn-sm btn-danger"
-                                    onclick="return confirm('Are you sure you want to delete this subject?');">Delete</a>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-                <?php else: ?>
-                <p>No subjects found.</p>
-                <?php endif; ?>
             </div>
         </div>
     </main>
