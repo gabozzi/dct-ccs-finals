@@ -74,5 +74,4 @@ require 'partials/side-bar.php';
     </div>
 </main>
 
-</body>
 </html>
