@@ -17,6 +17,10 @@ $passed_count = get_passed_students_count();
 $currentPage = 'dashboard';
 $pageTitle = "Dashboard";
 
+$add_subPage = './subjects/add_subjects.php';
+$studentPage = './students/';
+$logoutPage = '';
+
 require 'partials/header.php';
 require 'partials/side-bar.php';
 ?>
