@@ -30,6 +30,6 @@ function validate_login($email, $password) {
     $stmt->close();
     $conn->close();
     
-    return $user; // Returns user data if successful, or null if not
+    return $user; // Returns user data if successful
 }
 ?>
