@@ -2,6 +2,9 @@
 session_start();
 require '../../functions.php';
 
+// Ensure the database connection is established
+$conn = DB_CONNECT();
+
 if (!isset($_SESSION['user_id'])) {
     header('Location: index.php'); // Redirect to login page if not logged in
     exit();
@@ -26,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $message = $duplicate_error;
         } else {
             // Insert the new subject
-            if (insert_subject($subject_code, $subject_name)) {
+            if (insert_subject($conn, $subject_code, $subject_name)) {
                 header('Location: add_subjects.php'); // Redirect to subjects page after success
                 exit();
             } else {
@@ -125,9 +128,8 @@ require '../partials/side-bar.php';
                             <td>
                                 <a href="edit_subjects.php?code=<?php echo urlencode($subject['subject_code']); ?>"
                                     class="btn btn-sm btn-warning">Edit</a>
-                                <a href="delete_subjects.php?code=<?php echo urlencode($subject['subject_code']); ?>"
-                                    class="btn btn-sm btn-danger"
-                                    onclick="return confirm('Are you sure you want to delete this subject?');">Delete</a>
+                                <a href="delete_subject.php?code=<?php echo urlencode($subject['subject_code']); ?>"
+                                    class="btn btn-sm btn-danger">Delete</a>
                             </td>
                         </tr>
                         <?php endforeach; ?>

@@ -18,30 +18,53 @@ function db_connect() {
 // Validate login using email
 function validate_login($email, $password) {
     $conn = db_connect();
-    $email = trim($email);  // Trim email to remove extra spaces
-    $password = trim($password);  // Trim password to remove extra spaces
+    $email = trim($email);
+    $password = md5(trim($password)); // Use MD5 hashing to match stored password
 
-    // Query to check if email exists
     $sql = "SELECT * FROM users WHERE email = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('s', $email);
+    $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
     $user = $result->fetch_assoc();
 
-    // If user exists, compare plain text passwords
     if ($user && $user['password'] === $password) {
         $stmt->close();
         $conn->close();
-        return $user;
+        return $user; // Return user data if valid
     }
 
     $stmt->close();
     $conn->close();
-    return false;
+    return "Invalid email or password.";
 }
 
-//FUNCTION TO GET SUBJECTS COUNT
+
+function logout($indexPage) {
+    // Unset the 'email' session variable
+    unset($_SESSION['email']);
+
+    // Destroy the session
+    session_destroy();
+
+    // Redirect to the login page (index.php)
+    header("Location: $indexPage");
+    exit;
+}
+
+function guard_login(){
+    
+    $dashboardPage = 'dashboard.php';
+
+    if(isset($_SESSION['email'])){
+        header("Location: $dashboardPage");
+    } 
+}
+
+
+
+
+// FUNCTION TO GET SUBJECTS COUNT
 function get_subject_count() {
     $conn = db_connect();
     $sql = "SELECT COUNT(*) AS subject_count FROM subjects";
@@ -51,7 +74,7 @@ function get_subject_count() {
     return $subject_count;
 }
 
-//FNCTION TO GET COUNTS OF STUDENTS
+// FUNCTION TO GET COUNTS OF STUDENTS
 function get_student_count() {
     $conn = db_connect();
     $sql = "SELECT COUNT(*) AS student_count FROM students";
@@ -102,24 +125,6 @@ function get_all_subjects() {
     $conn->close();
     return $subjects;
 }
-
-// Function to get a single subject by ID
-function get_subject_by_id($subject_id) {
-    $conn = db_connect();
-    $sql = "SELECT * FROM subjects WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $subject_id);
-    $stmt->execute();
-    
-    $result = $stmt->get_result();
-    $subject = $result->fetch_assoc();
-    
-    $stmt->close();
-    $conn->close();
-    
-    return $subject;
-}
-
 function is_subject_name_duplicate($subject_code, $subject_name) {
     $conn = db_connect();
 
@@ -145,27 +150,63 @@ function is_subject_name_duplicate($subject_code, $subject_name) {
     return null;
 }
 
-
 // Function to insert a new subject
-function insert_subject($subject_code, $subject_name) {
-    $conn = db_connect(); // Use the existing DB connection function
-    
-    // Prepare the query to prevent SQL injection
+function insert_subject($conn, $subject_code, $subject_name) {
     $query = "INSERT INTO subjects (subject_code, subject_name) VALUES (?, ?)";
-    $stmt = $conn
-    ->prepare($query);
-    
-    // Bind parameters and execute the query
-    $stmt->bind_param("ss", $subject_code, $subject_name);  // "ss" for two strings
-    
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("ss", $subject_code, $subject_name);
+
     if ($stmt->execute()) {
-        return true;  // Return true if successful
+        $stmt->close();
+        return "Subject added successfully.";
     } else {
-        return false;  // Return false if there was an error
+        return "Error: " . $stmt->error; // Return detailed error message
     }
 }
 
 
+// Get subject by code
+function get_subject_by_code($conn, $subject_code) {
+    $query = "SELECT * FROM subjects WHERE subject_code = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("s", $subject_code);  // Only bind $subject_code
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result->fetch_assoc();
+}
+
+// Function to update a subject
+function update_subject($conn, $subject_code, $subject_name, $original_subject_code) {
+    // SQL to update the subject record
+    $query = "UPDATE subjects SET subject_code = ?, subject_name = ? WHERE subject_code = ?";
+    
+    if ($stmt = $conn->prepare($query)) {
+        // Bind the parameters
+        $stmt->bind_param("sss", $subject_code, $subject_name, $original_subject_code);
+
+        // Execute the query
+        if ($stmt->execute()) {
+            return true; // Successfully updated
+        } else {
+            return false; // Failed to update
+        }
+    } else {
+        return false; // Query preparation failed
+    }
+}
+
+
+
+
+
+// Delete subject
+// Function to delete a subject
+function delete_subject($conn, $subject_code) {
+    $query = "DELETE FROM subjects WHERE subject_code = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("s", $subject_code);  // Bind the subject code parameter
+    return $stmt->execute();  // Return true if the delete is successful
+}
 
 
 
