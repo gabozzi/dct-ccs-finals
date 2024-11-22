@@ -63,6 +63,8 @@ function guard_login(){
 }
 
 
+
+
 // FUNCTION TO GET SUBJECTS COUNT
 function get_subject_count() {
     $conn = db_connect();
@@ -206,6 +208,31 @@ function update_subject($subject_code, $subject_name) {
     $stmt->bind_param("ss", $subject_name, $subject_code);
     return $stmt->execute();
 }
+
+function delete_subject($conn, $subject_code, $redirectPage) {
+    // Prepare the SQL query to delete the subject
+    $sql = "DELETE FROM subjects WHERE subject_code = ?";
+    
+    // Prepare the statement
+    if ($stmt = $conn->prepare($sql)) {
+        // Bind the parameter
+        $stmt->bind_param("s", $subject_code);
+
+        // Execute the query
+        if ($stmt->execute()) {
+            // Redirect using JavaScript after successful deletion
+            echo "<script>window.location.href = '$redirectPage';</script>";
+        } else {
+            return "Failed to delete the subject with code $subject_code.";
+        }
+
+        // Close the statement
+        $stmt->close();
+    } else {
+        return "Error preparing the statement: " . $conn->error;
+    }
+}
+
 
 
 ?>

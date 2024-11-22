@@ -2,7 +2,7 @@
 session_start();
 require '../../functions.php';
 
-guard();
+guard_login();
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: index.php'); // Redirect to login page if not logged in
@@ -61,7 +61,7 @@ $pageTitle = "Edit Subject";
 $dashboardPage = '../dashboard.php';
 $add_subPage = './add_subjects.php';
 $studentPage = './students/';
-$logoutPage = '';
+$logoutPage = 'logout.php';
 
 require '../partials/header.php';
 require '../partials/side-bar.php';
